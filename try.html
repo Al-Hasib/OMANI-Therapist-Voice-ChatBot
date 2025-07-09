@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chatbot-container {
+            width: 400px;
+            height: 600px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .user-message {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background: #f0f0f0;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .voice-button {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .voice-button.listening {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            animation: pulse 1s infinite;
+        }
+
+        .text-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .text-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-button:hover {
+            background: #5a67d8;
+            transform: scale(1.1);
+        }
+
+        .status {
+            padding: 5px 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            background: #f9f9f9;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 2px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chat-header">
+            🤖 Voice Assistant
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                Hi! I'm your voice assistant. Click the microphone button to speak, or type your message below.<br><br>
+                <strong>For voice to work:</strong><br>
+                • Allow microphone access when prompted<br>
+                • Use Chrome, Edge, or Safari<br>
+                • HTTPS required (except localhost)<br>
+                • Speak clearly after clicking 🎤
+            </div>
+        </div>
+        
+        <div class="status" id="status">
+            Ready to chat
+        </div>
+        
+        <div class="chat-input">
+            <button class="voice-button" id="voiceButton">
+                🎤
+            </button>
+            <input type="text" class="text-input" id="textInput" placeholder="Type your message...">
+            <button class="send-button" id="sendButton">
+                ➤
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class VoiceChatbot {
+            constructor() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.textInput = document.getElementById('textInput');
+                this.voiceButton = document.getElementById('voiceButton');
+                this.sendButton = document.getElementById('sendButton');
+                this.status = document.getElementById('status');
+                
+                this.isListening = false;
+                this.recognition = null;
+                this.synthesis = window.speechSynthesis;
+                
+                this.initSpeechRecognition();
+                this.initEventListeners();
+            }
+
+            initSpeechRecognition() {
+                // Check for HTTPS requirement
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                    this.updateStatus('Voice requires HTTPS. Please use text input.');
+                    this.voiceButton.disabled = true;
+                    this.voiceButton.style.opacity = '0.5';
+                    return;
+                }
+
+                if ('webkitSpeechRecognition' in window) {
+                    this.recognition = new webkitSpeechRecognition();
+                } else if ('SpeechRecognition' in window) {
+                    this.recognition = new SpeechRecognition();
+                } else {
+                    this.updateStatus('Speech recognition not supported. Use text input.');
+                    this.voiceButton.disabled = true;
+                    this.voiceButton.style.opacity = '0.5';
+                    return;
+                }
+
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'en-US';
+
+                this.recognition.onstart = () => {
+                    this.isListening = true;
+                    this.voiceButton.classList.add('listening');
+                    this.voiceButton.innerHTML = '🔴';
+                    this.updateStatus('Listening... Speak now!');
+                };
+
+                this.recognition.onend = () => {
+                    this.isListening = false;
+                    this.voiceButton.classList.remove('listening');
+                    this.voiceButton.innerHTML = '🎤';
+                    this.updateStatus('Ready to chat');
+                };
+
+                this.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    this.textInput.value = transcript;
+                    this.sendMessage(transcript);
+                };
+
+                this.recognition.onerror = (event) => {
+                    this.isListening = false;
+                    this.voiceButton.classList.remove('listening');
+                    this.voiceButton.innerHTML = '🎤';
+                    
+                    let errorMessage = 'Voice error: ';
+                    switch(event.error) {
+                        case 'not-allowed':
+                            errorMessage += 'Microphone access denied. Please allow microphone access.';
+                            break;
+                        case 'no-speech':
+                            errorMessage += 'No speech detected. Try again.';
+                            break;
+                        case 'network':
+                            errorMessage += 'Network error. Check your connection.';
+                            break;
+                        case 'service-not-allowed':
+                            errorMessage += 'Service not allowed. Try HTTPS.';
+                            break;
+                        default:
+                            errorMessage += event.error;
+                    }
+                    this.updateStatus(errorMessage);
+                };
+            }
+
+            initEventListeners() {
+                this.voiceButton.addEventListener('click', () => {
+                    if (this.isListening) {
+                        this.recognition.stop();
+                    } else {
+                        this.startListening();
+                    }
+                });
+
+                this.sendButton.addEventListener('click', () => {
+                    const message = this.textInput.value.trim();
+                    if (message) {
+                        this.sendMessage(message);
+                    }
+                });
+
+                this.textInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const message = this.textInput.value.trim();
+                        if (message) {
+                            this.sendMessage(message);
+                        }
+                    }
+                });
+            }
+
+            startListening() {
+                if (!this.recognition) {
+                    this.updateStatus('Speech recognition not available');
+                    return;
+                }
+
+                try {
+                    // Request microphone permission explicitly
+                    navigator.mediaDevices.getUserMedia({ audio: true })
+                        .then(() => {
+                            this.recognition.start();
+                        })
+                        .catch((err) => {
+                            this.updateStatus('Microphone access denied. Please allow microphone access in your browser.');
+                            console.error('Microphone access error:', err);
+                        });
+                } catch (error) {
+                    // Fallback for older browsers
+                    this.recognition.start();
+                }
+            }
+
+            sendMessage(message) {
+                this.addMessage(message, 'user');
+                this.textInput.value = '';
+                
+                // Simulate bot response
+                setTimeout(() => {
+                    const response = this.getBotResponse(message);
+                    this.addMessage(response, 'bot');
+                    this.speakMessage(response);
+                }, 1000);
+            }
+
+            addMessage(message, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                messageDiv.textContent = message;
+                
+                this.chatMessages.appendChild(messageDiv);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            getBotResponse(message) {
+                const responses = {
+                    'hello': 'Hello! How can I help you today?',
+                    'hi': 'Hi there! What can I do for you?',
+                    'how are you': 'I\'m doing great, thank you for asking! How are you?',
+                    'what is your name': 'I\'m your voice assistant. You can call me whatever you like!',
+                    'bye': 'Goodbye! Have a great day!',
+                    'thank you': 'You\'re welcome! Is there anything else I can help you with?',
+                    'help': 'I can help you with various tasks. Just speak or type your request!',
+                    'what time is it': `The current time is ${new Date().toLocaleTimeString()}`,
+                    'what date is it': `Today is ${new Date().toLocaleDateString()}`,
+                };
+
+                const lowerMessage = message.toLowerCase();
+                
+                for (const [key, value] of Object.entries(responses)) {
+                    if (lowerMessage.includes(key)) {
+                        return value;
+                    }
+                }
+
+                return `I heard you say: "${message}". I'm a simple demo bot, but I'm here to help! Try saying hello, asking about the time, or just having a conversation.`;
+            }
+
+            speakMessage(message) {
+                if (this.synthesis && this.synthesis.speak) {
+                    this.synthesis.cancel(); // Stop any ongoing speech
+                    
+                    const utterance = new SpeechSynthesisUtterance(message);
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1;
+                    utterance.volume = 0.8;
+                    
+                    this.synthesis.speak(utterance);
+                }
+            }
+
+            updateStatus(message) {
+                this.status.textContent = message;
+            }
+        }
+
+        // Initialize the chatbot when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new VoiceChatbot();
+        });
+    </script>
+</body>
+</html>
