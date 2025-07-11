@@ -255,11 +255,8 @@ class OmaniTherapistAI:
                 return {
                     "response": crisis_response,
                     "emotional_state": emotional_state.value,
-                    "risk_level": risk_level.value,
                     "detected_language": detected_language,
-                    "is_crisis": True,
                     "timestamp": datetime.now().isoformat(),
-                    "requires_immediate_attention": True
                 }
             
             # Generate response using OpenAI
@@ -285,9 +282,7 @@ class OmaniTherapistAI:
             return {
                 "response": ai_response,
                 "emotional_state": emotional_state.value,
-                "risk_level": risk_level.value,
                 "detected_language": detected_language,
-                "is_crisis": False,
                 "timestamp": datetime.now().isoformat(),
 
             }
@@ -306,9 +301,7 @@ class OmaniTherapistAI:
             return {
                 "response": error_message,
                 "emotional_state": "unknown",
-                "risk_level": "unknown",
                 "detected_language": detected_language,
-                "is_crisis": False,
                 "timestamp": datetime.now().isoformat(),
                 "error": str(e)
             }
@@ -356,7 +349,6 @@ Can you contact one of these numbers now? Or is there someone you trust who can 
         return {
             "total_messages": len(self.conversation_history),
             "current_emotional_state": self.emotional_state.value,
-            "current_risk_level": self.risk_level.value,
             "session_start": self.conversation_history[0].get("timestamp") if self.conversation_history else None,
             "last_interaction": datetime.now().isoformat()
         }
@@ -405,9 +397,7 @@ def gpt_response(query):
     response = therapist.generate_therapeutic_response(query)
     print(f"AI Response: {response['response']}")
     print(f"Emotional State: {response['emotional_state']}")
-    print(f"Risk Level: {response['risk_level']}")
     print(f"Detected Language: {response['detected_language']}")
-    print("-" * 50)
     return response
 
 
@@ -446,7 +436,6 @@ if __name__ == "__main__":
         response = therapist.generate_therapeutic_response(scenario)
         print(f"AI Response: {response['response']}")
         print(f"Emotional State: {response['emotional_state']}")
-        print(f"Risk Level: {response['risk_level']}")
         print(f"Detected Language: {response['detected_language']}")
         print("-" * 50)
     

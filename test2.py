@@ -72,24 +72,7 @@ with gr.Blocks(title="Multilingual Speech to Text") as iface:
         gpt_result = ""
         if current_text and current_text.strip():
             response = gpt_response(current_text)
-            gpt_result = f"Response: {response['response']} \n\nEmotion: {response['emotional_state']}"
-            
-            # Update history with both query and answer
-            
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            detected_lang = response.get('detected_language', 'Unknown')
-            
-            # Format the history entry
-            history_entry = f"[{timestamp}] [{language}] [{detected_lang}]\n"
-            history_entry += f"Query: {current_text}\n"
-            history_entry += f"Answer: {response['response']}"
-            history_entry += "-----------------------\n\n"
-            
-            # Add to history
-            if updated_history:
-                updated_history = history_entry + updated_history
-            else:
-                updated_history = history_entry
+            gpt_result = f"Response: {response['response']} \nEmotion: {response['emotional_state']}"
         
         return updated_history, current_text, gpt_result
     
