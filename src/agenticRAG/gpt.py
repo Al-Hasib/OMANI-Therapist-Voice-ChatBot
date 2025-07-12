@@ -9,19 +9,12 @@ from loguru import logger
 from dotenv import load_dotenv
 load_dotenv()
 
-class RiskLevel(Enum):
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-    CRITICAL = "critical"
-
 class EmotionalState(Enum):
     CALM = "calm"
     ANXIOUS = "anxious"
     DEPRESSED = "depressed"
     ANGRY = "angry"
     DISTRESSED = "distressed"
-    CRISIS = "crisis"
 
 class OmaniTherapistAI:
     def __init__(self, api_key: str = None):
@@ -41,21 +34,6 @@ class OmaniTherapistAI:
         self.conversation_history = []
         self.user_profile = {}
         self.emotional_state = EmotionalState.CALM
-        self.risk_level = RiskLevel.LOW
-        
-        # Crisis keywords in Arabic and English
-        self.crisis_keywords = {
-            'arabic': [
-                'انتحار', 'أريد أن أموت', 'لا أستطيع المتابعة', 'أريد أن أؤذي نفسي',
-                'أفكر في الموت', 'لا قيمة لي', 'أريد أن أنهي حياتي', 'لا أحد يهتم بي',
-                'أشعر بالفراغ', 'أريد أن أختفي', 'أكره نفسي', 'أريد أن أؤذي شخصاً'
-            ],
-            'english': [
-                'suicide', 'kill myself', 'end my life', 'hurt myself', 'self harm',
-                'want to die', 'no point living', 'better off dead', 'hate myself',
-                'worthless', 'hopeless', 'can\'t go on', 'want to hurt someone'
-            ]
-        }
         
         # System prompt for therapeutic conversations
         self.system_prompt = self._create_system_prompt()
@@ -80,13 +58,6 @@ class OmaniTherapistAI:
     - Trauma-informed approaches
     - Spiritual therapy compatible with Islam
 
-    ## Safety Protocols:
-    - Detect suicide/self-harm risks
-    - Assess risk levels: low, moderate, high, critical
-    - Apply crisis intervention protocols
-    - Refer to professional help when needed
-    - Maintain confidentiality
-
     ## Language Guidelines:
     **CRITICAL: Always respond in the SAME language the user uses:**
     - If user writes in Arabic → respond in Omani Arabic
@@ -109,19 +80,6 @@ class OmaniTherapistAI:
     - Consider family/community role in mental health
     - Use religious references wisely when appropriate
     - Address mental health stigma sensitively
-
-    ## Emergency Situations:
-    If you detect suicidal ideation or self-harm:
-    - Request immediate help
-    - Emergency contacts: 9999 (Oman)
-    - Life Support Center: 25252525
-    - Al Masarra Hospital: 24567890
-
-    **Arabic Emergency Response:**
-    أفهم أنك تمر بوقت صعب جداً. يرجى التواصل فوراً مع الطوارئ: 9999 أو مركز الحياة: 25252525
-
-    **English Emergency Response:**
-    I understand you're going through a very difficult time. Please contact emergency services immediately: 9999 or Life Support Center: 25252525
 
     Remember: You are a supportive assistant, not a replacement for professional specialized therapy.
     """
@@ -147,28 +105,18 @@ class OmaniTherapistAI:
         else:
             return 'mixed'
     
-    def analyze_emotional_state(self, user_input: str) -> Tuple[EmotionalState, RiskLevel, str]:
+    def analyze_emotional_state(self, user_input: str) -> Tuple[EmotionalState, str]:
         """
-        Analyze user's emotional state and risk level from input
+        Analyze user's emotional state from input
         
         Args:
             user_input: User's message in Arabic or English
             
         Returns:
-            Tuple of (emotional_state, risk_level, detected_language)
+            Tuple of (emotional_state, detected_language)
         """
         user_input_lower = user_input.lower()
         detected_language = self.detect_language(user_input)
-        
-        # Check for crisis keywords
-        crisis_detected = False
-        for lang, keywords in self.crisis_keywords.items():
-            if any(keyword in user_input_lower for keyword in keywords):
-                crisis_detected = True
-                break
-        
-        if crisis_detected:
-            return EmotionalState.CRISIS, RiskLevel.CRITICAL, detected_language
         
         # Emotional state analysis using keywords (expanded for both languages)
         anxiety_keywords = [
@@ -208,15 +156,15 @@ class OmaniTherapistAI:
         ]
         
         if any(keyword in user_input_lower for keyword in anxiety_keywords):
-            return EmotionalState.ANXIOUS, RiskLevel.MODERATE, detected_language
+            return EmotionalState.ANXIOUS, detected_language
         elif any(keyword in user_input_lower for keyword in depression_keywords):
-            return EmotionalState.DEPRESSED, RiskLevel.MODERATE, detected_language
+            return EmotionalState.DEPRESSED, detected_language
         elif any(keyword in user_input_lower for keyword in anger_keywords):
-            return EmotionalState.ANGRY, RiskLevel.LOW, detected_language
+            return EmotionalState.ANGRY, detected_language
         elif any(keyword in user_input_lower for keyword in stress_keywords):
-            return EmotionalState.DISTRESSED, RiskLevel.MODERATE, detected_language
+            return EmotionalState.DISTRESSED, detected_language
         
-        return EmotionalState.CALM, RiskLevel.LOW, detected_language
+        return EmotionalState.CALM, detected_language
     
     def generate_therapeutic_response(self, user_input: str, include_history: bool = True) -> Dict:
         """
@@ -231,9 +179,8 @@ class OmaniTherapistAI:
         """
         try:
             # Analyze emotional state and detect language
-            emotional_state, risk_level, detected_language = self.analyze_emotional_state(user_input)
+            emotional_state, detected_language = self.analyze_emotional_state(user_input)
             self.emotional_state = emotional_state
-            self.risk_level = risk_level
             
             # Prepare messages for API
             messages = [{"role": "system", "content": self.system_prompt}]
@@ -249,16 +196,6 @@ class OmaniTherapistAI:
             # Add current user message
             messages.append({"role": "user", "content": user_input})
             
-            # Crisis intervention check
-            if risk_level == RiskLevel.CRITICAL:
-                crisis_response = self._generate_crisis_response(detected_language)
-                return {
-                    "response": crisis_response,
-                    "emotional_state": emotional_state.value,
-                    "detected_language": detected_language,
-                    "timestamp": datetime.now().isoformat(),
-                }
-            
             # Generate response using OpenAI
             response = self.client.responses.create(
                 model="gpt-4.1-nano-2025-04-14",
@@ -268,8 +205,6 @@ class OmaniTherapistAI:
             logger.info(f"Generated response: {response.output_text}")
 
             ai_response = (response.output_text)
-            
-            # ai_response = response.choices[0].message.content.strip()
             
             # Update conversation history
             self.conversation_history.append({"role": "user", "content": user_input})
@@ -284,7 +219,6 @@ class OmaniTherapistAI:
                 "emotional_state": emotional_state.value,
                 "detected_language": detected_language,
                 "timestamp": datetime.now().isoformat(),
-
             }
             
         except Exception as e:
@@ -306,44 +240,6 @@ class OmaniTherapistAI:
                 "error": str(e)
             }
     
-    def _generate_crisis_response(self, language: str = 'arabic') -> str:
-        """Generate immediate crisis intervention response in appropriate language"""
-        if language == 'english':
-            return """I understand that you're going through an extremely difficult time right now, and I appreciate your courage in talking to me.
-
-🆘 **THIS IS VERY IMPORTANT**: If you have thoughts of harming yourself or others, please contact immediately:
-- Emergency Services: 9999
-- Life Support Center: 25252525
-- Al Masarra Hospital: 24567890
-
-You are not alone, and your life has great value. There are trained professionals who can help you right now.
-
-Can you contact one of these numbers now? Or is there someone you trust who can help you?"""
-        
-        elif language == 'mixed':
-            return """I understand أنك تمر بوقت صعب جداً right now, وأقدر شجاعتك في التحدث معي.
-
-🆘 **هذا مهم جداً / THIS IS VERY IMPORTANT**: إذا كانت لديك أفكار لإيذاء نفسك أو الآخرين، يرجى التواصل فوراً مع:
-- الطوارئ / Emergency: 9999
-- مركز الحياة / Life Support Center: 25252525
-- مستشفى المسرة / Al Masarra Hospital: 24567890
-
-أنت لست وحدك، وحياتك لها قيمة كبيرة. You are not alone, and your life has great value.
-
-هل يمكنك التواصل مع أحد هذه الأرقام الآن؟ Can you contact one of these numbers now?"""
-        
-        else:  # Arabic
-            return """أفهم أنك تمر بوقت صعب جداً الآن، وأقدر شجاعتك في التحدث معي.
-
-🆘 **هذا مهم جداً**: إذا كانت لديك أفكار لإيذاء نفسك أو الآخرين، يرجى التواصل فوراً مع:
-- الطوارئ: 9999
-- مركز الحياة للدعم النفسي: 25252525
-- مستشفى المسرة: 24567890
-
-أنت لست وحدك، وحياتك لها قيمة كبيرة. هناك أشخاص مدربون يمكنهم مساعدتك الآن.
-
-هل يمكنك التواصل مع أحد هذه الأرقام الآن؟ أو هل هناك شخص تثق به يمكنه مساعدتك؟"""
-    
     def get_conversation_summary(self) -> Dict:
         """Get summary of current conversation session"""
         return {
@@ -357,7 +253,6 @@ Can you contact one of these numbers now? Or is there someone you trust who can 
         """Clear conversation history and reset state"""
         self.conversation_history = []
         self.emotional_state = EmotionalState.CALM
-        self.risk_level = RiskLevel.LOW
         logger.info("Conversation cleared")
     
     def export_conversation(self, filename: str = None) -> str:

@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Knowledge Base Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            font-weight: 800;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-content {
+            padding: 50px 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .section.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .section h2 {
+            color: #4338ca;
+            margin-bottom: 25px;
+            font-size: 2em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon {
+            width: 32px;
+            height: 32px;
+            fill: currentColor;
+        }
+
+        .upload-area {
+            border: 3px dashed #4338ca;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(67, 56, 202, 0.05), rgba(124, 58, 237, 0.05));
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .upload-area:hover::before {
+            left: 100%;
+        }
+
+        .upload-area:hover {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(67, 56, 202, 0.1));
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(67, 56, 202, 0.2);
+        }
+
+        .upload-area.dragover {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(67, 56, 202, 0.2));
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 25px;
+            opacity: 0.7;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: width 0.3s ease, height 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(67, 56, 202, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 15px 30px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 15px 30px rgba(107, 114, 128, 0.4);
+        }
+
+        .form-group {
+            margin: 25px 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 1.1em;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4338ca;
+            box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
+            background: white;
+        }
+
+        .kb-list {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .kb-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .kb-item:hover {
+            background: rgba(67, 56, 202, 0.1);
+            transform: translateX(5px);
+        }
+
+        .kb-item:last-child {
+            border-bottom: none;
+        }
+
+        .kb-info {
+            flex: 1;
+        }
+
+        .kb-name {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .kb-meta {
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .kb-description {
+            font-style: italic;
+            color: #4338ca;
+            font-weight: 500;
+        }
+
+        .kb-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 0.9em;
+            border-radius: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 25px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4338ca, #7c3aed);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .status-message {
+            padding: 20px;
+            border-radius: 15px;
+            margin: 25px 0;
+            font-weight: 600;
+            display: none;
+            text-align: center;
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            color: #166534;
+            border: 2px solid #10b981;
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, #fef2f2, #fecaca);
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4338ca, #7c3aed);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #4338ca, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #6b7280;
+        }
+
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 25px;
+            opacity: 0.3;
+        }
+
+        .file-preview {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .file-preview:hover {
+            border-color: #4338ca;
+            transform: translateX(5px);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4338ca;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .section {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 RAG Knowledge Base Manager</h1>
+            <p>Manage your Retrieval-Augmented Generation knowledge base with style</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                    Upload Documents
+                </h2>
+                
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="#4338ca">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                    <h3>Drop files here or click to upload</h3>
+                    <p>Supported: PDF, TXT, DOCX, MD</p>
+                    <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.txt,.docx,.md,.doc">
+                </div>
+
+                <div class="form-group">
+                    <label for="documentNote">Document Description:</label>
+                    <input type="text" id="documentNote" class="form-control" placeholder="Describe the content of your documents...">
+                </div>
+
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="status-message" id="statusMessage"></div>
+
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                    <button class="btn" onclick="processUpload()">
+                        <span id="uploadBtnText">Process Upload</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearUploads()">Clear</button>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                    </svg>
+                    Statistics
+                </h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalDocs">0</div>
+                        <div class="stat-label">Documents</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalSize">0 MB</div>
+                        <div class="stat-label">Total Size</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="lastUpdate">Never</div>
+                        <div class="stat-label">Last Updated</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knowledge Base Browser -->
+            <div class="section full-width">
+                <h2>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/>
+                    </svg>
+                    Knowledge Base
+                </h2>
+
+                <input type="text" class="form-control" id="searchBox" placeholder="🔍 Search your knowledge base..." style="margin-bottom: 25px;">
+
+                <div class="kb-list" id="kbList">
+                    <div class="empty-state">
+                        <svg class="empty-icon" viewBox="0 0 24 24" fill="#d1d5db">
+                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/>
+                        </svg>
+                        <h3>No documents found</h3>
+                        <p>Upload some documents to get started</p>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 25px;">
+                    <button class="btn btn-danger" onclick="clearKnowledgeBase()">🗑️ Clear Knowledge Base</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let knowledgeBase = JSON.parse(localStorage.getItem('knowledgeBase') || '[]');
+        let selectedFiles = [];
+        let stats = JSON.parse(localStorage.getItem('stats') || '{"total_docs": 0, "total_size": 0, "last_update": "Never"}');
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadKnowledgeBase();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const searchBox = document.getElementById('searchBox');
+
+            // Upload area events
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+
+            // File input change
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Search functionality
+            searchBox.addEventListener('input', debounce(filterKnowledgeBase, 300));
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFileSelect({ target: { files } });
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            selectedFiles = [];
+            
+            files.forEach(file => {
+                if (isValidFile(file)) {
+                    selectedFiles.push(file);
+                }
+            });
+            
+            updateUploadArea();
+        }
+
+        function isValidFile(file) {
+            const validTypes = ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown'];
+            const validExtensions = ['.pdf', '.txt', '.docx', '.md', '.doc'];
+            return validTypes.includes(file.type) || validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateUploadArea() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            if (selectedFiles.length > 0) {
+                uploadArea.innerHTML = `
+                    <div style="text-align: left;">
+                        <h3 style="margin-bottom: 20px; text-align: center;">📁 Files Ready (${selectedFiles.length})</h3>
+                        ${selectedFiles.map((file, index) => `
+                            <div class="file-preview">
+                                <div class="file-info">
+                                    <div class="file-name">${file.name}</div>
+                                    <div class="file-size">${formatFileSize(file.size)}</div>
+                                </div>
+                                <button class="remove-btn" onclick="removeFile(${index})">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                uploadArea.innerHTML = `
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="#4338ca">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                    <h3>Drop files here or click to upload</h3>
+                    <p>Supported: PDF, TXT, DOCX, MD</p>
+                    <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.txt,.docx,.md,.doc">
+                `;
+                // Re-attach event listener
+                document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            }
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateUploadArea();
+        }
+
+        function clearUploads() {
+            selectedFiles = [];
+            document.getElementById('fileInput').value = '';
+            document.getElementById('documentNote').value = '';
+            updateUploadArea();
+            hideStatus();
+        }
+
+        async function processUpload() {
+            const documentNote = document.getElementById('documentNote').value.trim();
+            const uploadBtn = document.getElementById('uploadBtnText');
+            
+            if (selectedFiles.length === 0) {
+                showStatus('Please select files to upload first.', 'error');
+                return;
+            }
+
+            if (!documentNote) {
+                showStatus('Please provide a description for the document(s).', 'error');
+                return;
+            }
+
+            // Show loading state
+            uploadBtn.innerHTML = '<span class="loading"></span> Processing...';
+            showProgress();
+            showStatus('Processing files and updating knowledge base...', 'success');
+
+            try {
+                // Simulate file processing
+                await simulateFileProcessing();
+                
+                // Add documents to knowledge base
+                const timestamp = new Date().toISOString();
+                const documentsAdded = [];
+                
+                for (const file of selectedFiles) {
+                    const document = {
+                        id: generateId(),
+                        name: file.name,
+                        type: file.type || getFileTypeFromName(file.name),
+                        size: file.size,
+                        description: documentNote,
+                        uploadDate: timestamp,
+                        content: await extractTextContent(file),
+                        chunks: await chunkDocument(file)
+                    };
+                    
+                    knowledgeBase.push(document);
+                    documentsAdded.push(document);
+                }
+                
+                // Update statistics
+                updateStats();
+                
+                // Save to localStorage
+                saveToStorage();
+                
+                hideProgress();
+                showStatus(`✅ Successfully processed ${documentsAdded.length} document(s)`, 'success');
+                clearUploads();
+                await loadStats();
+                await loadKnowledgeBase();
+                
+            } catch (error) {
+                hideProgress();
+                showStatus(`❌ Upload failed: ${error.message}`, 'error');
+            } finally {
+                // Reset button
+                uploadBtn.innerHTML = 'Process Upload';
+            }
+        }
+
+        async function simulateFileProcessing() {
+            // Simulate processing time
+            const delay = Math.random() * 2000 + 1000; // 1-3 seconds
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        async function extractTextContent(file) {
+            // Simulate text extraction
+            if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+                return await readTextFile(file);
+            } else if (file.name.endsWith('.md')) {
+                return await readTextFile(file);
+            } else {
+                // For other file types, return simulated content
+                return `Extracted content from ${file.name}. This is a simulation of text extraction from ${file.type || 'unknown'} file.`;
+            }
+        }
+
+        async function readTextFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function getFileTypeFromName(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const typeMap = {
+                'pdf': 'application/pdf',
+                'txt': 'text/plain',
+                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'doc': 'application/msword',
+                'md': 'text/markdown'
+            };
+            return typeMap[ext] || 'application/octet-stream';
+        }
+
+        function chunkDocument(file) {
+            // Simulate document chunking
+            const numChunks = Math.floor(Math.random() * 10) + 1;
+            const chunks = [];
+            
+            for (let i = 0; i < numChunks; i++) {
+                chunks.push({
+                    id: generateId(),
+                    index: i,
+                    content: `Chunk ${i + 1} from ${file.name}`,
+                    embedding: null
+                });
+            }
+            
+            return chunks;
+        }
+
+        function updateStats() {
+            const totalSize = knowledgeBase.reduce((sum, doc) => sum + doc.size, 0);
+            stats = {
+                total_docs: knowledgeBase.length,
+                total_size: totalSize,
+                last_update: new Date().toISOString()
+            };
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('knowledgeBase', JSON.stringify(knowledgeBase));
+            localStorage.setItem('stats', JSON.stringify(stats));
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/statistics');
+                const data = await response.json();
+                
+                document.getElementById('totalDocs').textContent = data.total_docs;
+                document.getElementById('totalSize').textContent = data.total_size + ' MB';
+                document.getElementById('lastUpdate').textContent = data.last_update;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Fallback to localStorage
+                document.getElementById('totalDocs').textContent = stats.total_docs;
+                document.getElementById('totalSize').textContent = (stats.total_size / (1024 * 1024)).toFixed(2) + ' MB';
+                document.getElementById('lastUpdate').textContent = stats.last_update === 'Never' ? 'Never' : new Date(stats.last_update).toLocaleDateString();
+            }
+        }
+
+        async function loadKnowledgeBase() {
+            try {
+                const response = await fetch('/api/knowledge-base');
+                const data = await response.json();
+                
+                displayKnowledgeBase(data);
+            } catch (error) {
+                console.error('Error loading knowledge base:', error);
+                // Fallback to localStorage
+                displayKnowledgeBase(knowledgeBase);
+            }
+        }
+
+        function displayKnowledgeBase(data) {
+            const kbList = document.getElementById('kbList');
+            
+            if (data.length === 0) {
+                kbList.innerHTML = `
+                    <div class="empty-state">
+                        <svg class="empty-icon" viewBox="0 0 24 24" fill="#d1d5db">
+                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/>
+                        </svg>
+                        <h3>No documents found</h3>
+                        <p>Upload some documents to get started</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            kbList.innerHTML = data.map(doc => `
+                <div class="kb-item fade-in">
+                    <div class="kb-info">
+                        <div class="kb-name">${doc.name}</div>
+                        <div class="kb-meta">
+                            ${doc.type} • ${doc.size} • ${doc.chunks} chunks
+                        </div>
+                        <div class="kb-meta">
+                            Uploaded: ${new Date(doc.uploaded).toLocaleDateString()}
+                        </div>
+                        <div class="kb-description">${doc.description || 'No description'}</div>
+                    </div>
+                    <div class="kb-actions">
+                        <button class="btn btn-small btn-secondary" onclick="viewDocument(${doc.id})">👁️ View</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteDocument(${doc.id})">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function processUpload() {
+            const documentNote = document.getElementById('documentNote').value.trim();
+            const uploadBtn = document.getElementById('uploadBtnText');
+            
+            if (selectedFiles.length === 0) {
+                showStatus('Please select files to upload first.', 'error');
+                return;
+            }
+
+            if (!documentNote) {
+                showStatus('Please provide a description for the document(s).', 'error');
+                return;
+            }
+
+            // Show loading state
+            uploadBtn.innerHTML = '<span class="loading"></span> Processing...';
+            showProgress();
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            formData.append('description', documentNote);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    hideProgress();
+                    showStatus(`✅ ${result.message}`, 'success');
+                    clearUploads();
+                    await loadStats();
+                    await loadKnowledgeBase();
+                } else {
+                    hideProgress();
+                    showStatus(`❌ Upload failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                hideProgress();
+                showStatus(`❌ Upload failed: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.innerHTML = 'Process Upload';
+            }
+        }
+
+        async function deleteDocument(docId) {
+            if (!confirm('Are you sure you want to delete this document?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/delete/${docId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showStatus(`✅ ${result.message}`, 'success');
+                    await loadStats();
+                    await loadKnowledgeBase();
+                } else {
+                    showStatus(`❌ Delete failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Delete failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function viewDocument(docId) {
+            try {
+                const response = await fetch(`/api/document/${docId}`);
+                const doc = await response.json();
+
+                if (response.ok) {
+                    alert(`Document Details:\n\nName: ${doc.name}\nType: ${doc.type}\nSize: ${doc.size}\nUploaded: ${new Date(doc.uploaded).toLocaleString()}\nDescription: ${doc.description}\nChunks: ${doc.chunks}`);
+                } else {
+                    showStatus(`❌ Error: ${doc.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Error viewing document: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearKnowledgeBase() {
+            if (!confirm('Are you sure you want to clear the entire knowledge base? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/clear-all', {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showStatus(`✅ ${result.message}`, 'success');
+                    await loadStats();
+                    await loadKnowledgeBase();
+                } else {
+                    showStatus(`❌ Clear failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Clear failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function filterKnowledgeBase() {
+            const query = document.getElementById('searchBox').value.trim();
+            
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                displayKnowledgeBase(data);
+            } catch (error) {
+                console.error('Error searching:', error);
+                showStatus('❌ Search failed', 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                hideStatus();
+            }, 5000);
+        }
+
+        function hideStatus() {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.style.display = 'none';
+        }
+
+        function showProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+                
+                if (progress >= 90) {
+                    clearInterval(interval);
+                }
+            }, 200);
+        }
+
+        function hideProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            progressFill.style.width = '100%';
+            setTimeout(() => {
+                progressBar.style.display = 'none';
+                progressFill.style.width = '0%';
+            }, 500);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Auto-refresh stats and knowledge base every 30 seconds
+        setInterval(async () => {
+            await loadStats();
+            await loadKnowledgeBase();
+        }, 30000);
+    </script>
+</body>
+</html>
