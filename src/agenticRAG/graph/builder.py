@@ -1,11 +1,11 @@
 from langgraph.graph import StateGraph, END
-from models.state import AgentState
-from nodes.query_upgrader import query_upgrader_node
-from nodes.query_router import query_router_node
-from nodes.rag_node import rag_node
-from nodes.web_search_node import web_search_node
-from nodes.direct_llm_node import direct_llm_node
-from graph.router import route_query
+from src.AgenticRAG.models.state import AgentState
+from src.AgenticRAG.nodes.query_upgrader import query_upgrader_node
+from src.AgenticRAG.nodes.query_router import query_router_node
+from src.AgenticRAG.nodes.rag_node import rag_node
+from src.AgenticRAG.nodes.web_search_node import web_search_node
+from src.AgenticRAG.nodes.direct_llm_node import direct_llm_node
+from src.AgenticRAG.graph.router import route_query
 
 class GraphBuilder:
     """Builder for the AgenticRAG graph"""

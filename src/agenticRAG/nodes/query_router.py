@@ -1,8 +1,8 @@
 from typing import Literal
-from models.state import AgentState
-from components.llm_factory import LLMFactory
-from config.prompts import Prompts
-from config.settings import settings
+from src.AgenticRAG.models.state import AgentState
+from src.AgenticRAG.components.llm_factory import LLMFactory
+from src.AgenticRAG.config.prompts import Prompts
+from src.config.settings import settings
 
 class QueryRouter:
     """Node for routing queries to appropriate paths"""

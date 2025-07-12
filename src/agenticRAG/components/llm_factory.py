@@ -1,6 +1,6 @@
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
-from config.settings import settings
+from src.config.settings import settings
 from typing import Union, Literal
 
 class LLMFactory:
