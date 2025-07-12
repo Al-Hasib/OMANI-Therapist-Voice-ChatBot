@@ -1,8 +1,8 @@
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface  import HuggingFaceEmbeddings
 from typing import List, Optional
-from config.settings import settings
-from components.embeddings import EmbeddingFactory
+from src.config.settings import settings
+from src.AgenticRAG.components.embeddings import EmbeddingFactory
 import os
 
 class VectorStoreManager:

@@ -1,7 +1,10 @@
 import gradio as gr
 from src.response.gpt import gpt_response
 from src.SpeechToText.sr import transcribe_audio, clear_history
+from src.SpeechToText.hamsa import transcribe_audio_hamsa
 from datetime import datetime
+from loguru import logger
+
 
 # Create Gradio Interface
 with gr.Blocks(title="Multilingual Speech to Text") as iface:
@@ -66,7 +69,14 @@ with gr.Blocks(title="Multilingual Speech to Text") as iface:
     # Function to process transcription and get GPT response
     def process_audio_and_respond(audio, language, history):
         # Get transcription
-        updated_history, current_text = transcribe_audio(audio, language, history)
+        try:
+            updated_history, current_text = transcribe_audio(audio, language, history)
+            logger.info(f"Transcription successful: {current_text}")
+        except Exception as e:
+            updated_history, current_text = transcribe_audio_hamsa(audio, language, history)
+            logger.error(f"Transcription failed. Apply Fallback with Hamsa API: {e}")
+            if not current_text:
+                current_text = "Transcription failed. Please try again."
         
         # Get GPT response if there's transcribed text
         gpt_result = ""
