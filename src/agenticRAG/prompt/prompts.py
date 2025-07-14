@@ -1,4 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate
+import json
 
 class Prompts:
     """Centralized prompt templates"""
@@ -59,3 +60,19 @@ class Prompts:
         Be conversational, accurate, and helpful. If you're unsure about something, acknowledge the uncertainty."""),
         ("human", "{query}")
     ])
+
+def load_data_relative():
+    """Load data.json using relative path"""
+    try:
+        with open("knowledge_base_metadata.json", 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    except FileNotFoundError:
+        print("data.json not found in current directory")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        return None
+
+if __name__=="__main__":
+    print(load_data_relative())

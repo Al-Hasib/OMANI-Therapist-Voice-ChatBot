@@ -5,7 +5,6 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import mimetypes
 from src.agenticRAG.components.document_parsing import DocumentChunker
-from src.agenticRAG.components.embeddings import EmbeddingFactory
 from src.agenticRAG.components.vectorstore import VectorStoreManager
 
 app = Flask(__name__, template_folder='.')
@@ -153,10 +152,24 @@ def upload_files():
                 # Add to vector store
                 vector_store_manager = VectorStoreManager()
                 vector_store_manager.load_vectorstore()
-                vector_store_manager.add_documents(chunks, metadatas=[{'filename': filename, 'description': description}])
+                
+                # Create metadata for each chunk - THIS IS THE FIX
+                chunk_metadatas = []
+                for i, chunk in enumerate(chunks):
+                    chunk_metadata = {
+                        'filename': filename,
+                        'description': description,
+                        'chunk_index': i,
+                        'total_chunks': len(chunks),
+                        'uploaded': datetime.now().isoformat()
+                    }
+                    chunk_metadatas.append(chunk_metadata)
+                
+                # Now texts and metadatas have the same length
+                vector_store_manager.add_documents(chunks, metadatas=chunk_metadatas)
                 vector_store_manager.save_vectorstore()
 
-                # Create metadata entry
+                # Create metadata entry for the file
                 doc_metadata = {
                     'id': len(metadata) + 1,
                     'filename': filename,
@@ -178,7 +191,8 @@ def upload_files():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
+    
+    
 @app.route('/api/delete/<int:doc_id>', methods=['DELETE'])
 def delete_document(doc_id):
     """Delete a document from knowledge base"""

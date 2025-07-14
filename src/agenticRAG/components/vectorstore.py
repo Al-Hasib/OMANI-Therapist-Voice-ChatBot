@@ -2,7 +2,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_huggingface  import HuggingFaceEmbeddings
 from typing import List, Optional
 from src.config.settings import settings
-from src.AgenticRAG.components.embeddings import EmbeddingFactory
+from src.agenticRAG.components.embeddings import EmbeddingFactory
 import os
 
 class VectorStoreManager:
@@ -17,7 +17,7 @@ class VectorStoreManager:
         try:
             path = path or settings.VECTORSTORE_PATH
             if os.path.exists(path):
-                self.vectorstore = FAISS.load_local(path, self.embeddings)
+                self.vectorstore = FAISS.load_local(path, self.embeddings, allow_dangerous_deserialization=True)
                 return True
             return False
         except Exception as e:
