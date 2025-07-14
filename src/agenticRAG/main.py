@@ -1,9 +1,9 @@
 import time
 from typing import List
 from src.config.settings import settings
-from src.AgenticRAG.models.state import AgentState
-from src.AgenticRAG.models.schemas import QueryRequest, QueryResponse
-from src.AgenticRAG.graph.builder import GraphBuilder
+from src.agenticRAG.models.state import AgentState
+from src.agenticRAG.models.schemas import QueryRequest, QueryResponse
+from src.agenticRAG.graph.builder import GraphBuilder
 from loguru import logger
 
 class AgenticRAGSystem:

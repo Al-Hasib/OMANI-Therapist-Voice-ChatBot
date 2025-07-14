@@ -1,7 +1,7 @@
-from src.AgenticRAG.models.state import AgentState
-from src.AgenticRAG.components.llm_factory import LLMFactory
-from src.AgenticRAG.components.search_tools import SearchToolFactory
-from src.config.prompts import Prompts
+from src.agenticRAG.models.state import AgentState
+from src.agenticRAG.components.llm_factory import LLMFactory
+from src.agenticRAG.components.search_tools import SearchToolFactory
+from src.agenticRAG.prompt.prompts import Prompts
 
 class WebSearchNode:
     """Node for web search processing"""

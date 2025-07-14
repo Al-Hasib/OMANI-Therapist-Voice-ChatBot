@@ -1,7 +1,7 @@
-from src.AgenticRAG.models.state import AgentState
-from src.AgenticRAG.components.llm_factory import LLMFactory
-from src.AgenticRAG.components.vectorstore import VectorStoreManager
-from src.config.prompts import Prompts
+from src.agenticRAG.models.state import AgentState
+from src.agenticRAG.components.llm_factory import LLMFactory
+from src.agenticRAG.components.vectorstore import VectorStoreManager
+from src.agenticRAG.prompt.prompts import Prompts
 
 class RAGNode:
     """Node for RAG processing"""

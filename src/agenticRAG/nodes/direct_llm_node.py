@@ -1,6 +1,6 @@
-from src.AgenticRAG.models.state import AgentState
-from src.AgenticRAG.components.llm_factory import LLMFactory
-from src.AgenticRAG.config.prompts import Prompts
+from src.agenticRAG.models.state import AgentState
+from src.agenticRAG.components.llm_factory import LLMFactory
+from src.agenticRAG.prompt.prompts import Prompts
 
 class DirectLLMNode:
     """Node for direct LLM processing"""
