@@ -1,4 +1,4 @@
-from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_tavily import TavilySearch
 from langchain_community.utilities import GoogleSerperAPIWrapper
 from langchain_community.tools import GoogleSerperRun
 from src.config.settings import settings
@@ -11,11 +11,11 @@ class SearchToolFactory:
     _serper_instance = None
     
     @classmethod
-    def get_search_tool(cls, provider: Literal["tavily", "serper"] = "tavily") -> Union[TavilySearchResults, GoogleSerperRun]:
+    def get_search_tool(cls, provider: Literal["tavily", "serper"] = "tavily") -> Union[TavilySearch, GoogleSerperRun]:
         """Get or create search tool instance (singleton pattern)"""
         if provider == "tavily":
             if cls._tavily_instance is None:
-                cls._tavily_instance = TavilySearchResults(
+                cls._tavily_instance = TavilySearch(
                     api_key=settings.TAVILY_API_KEY
                 )
             return cls._tavily_instance
@@ -30,10 +30,10 @@ class SearchToolFactory:
             raise ValueError(f"Unsupported provider: {provider}")
     
     @classmethod
-    def create_new_search_tool(cls, provider: Literal["tavily", "serper"] = "tavily", **kwargs) -> Union[TavilySearchResults, GoogleSerperRun]:
+    def create_new_search_tool(cls, provider: Literal["tavily", "serper"] = "tavily", **kwargs) -> Union[TavilySearch, GoogleSerperRun]:
         """Create a new search tool instance with custom parameters"""
         if provider == "tavily":
-            return TavilySearchResults(
+            return TavilySearch(
                 api_key=kwargs.get("api_key", settings.TAVILY_API_KEY),
                 max_results=kwargs.get("max_results", settings.SEARCH_RESULTS_COUNT),
                 search_depth=kwargs.get("search_depth", settings.TAVILY_SEARCH_DEPTH),
@@ -55,7 +55,7 @@ class SearchToolFactory:
             raise ValueError(f"Unsupported provider: {provider}")
     
     @classmethod
-    def get_tavily_search(cls) -> TavilySearchResults:
+    def get_tavily_search(cls) -> TavilySearch:
         """Convenience method to get Tavily search tool"""
         return cls.get_search_tool("tavily")
     
