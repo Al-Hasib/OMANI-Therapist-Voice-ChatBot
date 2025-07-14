@@ -4,6 +4,9 @@ import json
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import mimetypes
+from src.agenticRAG.components.document_parsing import DocumentChunker
+from src.agenticRAG.components.embeddings import EmbeddingFactory
+from src.agenticRAG.components.vectorstore import VectorStoreManager
 
 app = Flask(__name__, template_folder='.')
 
@@ -139,14 +142,27 @@ def upload_files():
                 
                 filepath = os.path.join(UPLOAD_FOLDER, filename)
                 file.save(filepath)
-                
+
+                print(f"File saved: {filepath}")
+                # Create DocumentChunker instance
+                chunker = DocumentChunker(chunk_size=1000, chunk_overlap=100)
+                # Process the file to create chunks
+                chunks = chunker.process_file(filepath)
+                print(f"Chunks created: {len(chunks)} for {filename}")
+
+                # Add to vector store
+                vector_store_manager = VectorStoreManager()
+                vector_store_manager.load_vectorstore()
+                vector_store_manager.add_documents(chunks, metadatas=[{'filename': filename, 'description': description}])
+                vector_store_manager.save_vectorstore()
+
                 # Create metadata entry
                 doc_metadata = {
                     'id': len(metadata) + 1,
                     'filename': filename,
                     'description': description,
                     'uploaded': datetime.now().isoformat(),
-                    'chunks': 0  # You can implement chunking logic here
+                    'chunks': len(chunks) if chunks else 0,
                 }
                 
                 metadata.append(doc_metadata)
