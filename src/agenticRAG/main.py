@@ -63,6 +63,12 @@ class AgenticRAGSystem:
         
         return responses
 
+def agenticRAGResponse(query: str) -> QueryResponse:
+    """Function to get response for a single query"""
+    
+    system = AgenticRAGSystem()
+    return system.process_query(query)
+
 def main():
     """Main function"""
     

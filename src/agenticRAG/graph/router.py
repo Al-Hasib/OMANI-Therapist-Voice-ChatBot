@@ -1,5 +1,5 @@
 from typing import Literal
-from models.state import AgentState
+from src.agenticRAG.models.state import AgentState
 
 def route_query(state: AgentState) -> Literal["rag_path", "web_search", "direct_llm"]:
     """Route to appropriate path based on decision"""

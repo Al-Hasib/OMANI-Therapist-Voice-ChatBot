@@ -6,7 +6,7 @@ from src.agenticRAG.components.embeddings import EmbeddingFactory
 import os
 from typing import Dict, Any, List, Optional
 from pathlib import Path
-from src.agenticRAG.components.document_chunker import DocumentChunker
+from src.agenticRAG.components.document_parsing import DocumentChunker
 
 
 class VectorStoreManager:
