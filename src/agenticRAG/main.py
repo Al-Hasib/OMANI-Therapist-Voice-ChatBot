@@ -35,11 +35,11 @@ class AgenticRAGSystem:
             
             # Create response
             response = QueryResponse(
-                query=final_state.user_query,
-                upgraded_query=final_state.upgraded_query,
-                route_taken=final_state.route_decision,
-                response=final_state.final_response,
-                metadata=final_state.metadata,
+                query=final_state["user_query"],
+                upgraded_query=final_state["upgraded_query"],
+                route_taken=final_state["route_decision"],
+                response=final_state["final_response"],
+                metadata=final_state["metadata"],
                 processing_time=processing_time
             )
             

@@ -9,7 +9,7 @@ class QueryRouter:
     
     def __init__(self):
         self.llm = LLMFactory.get_llm()
-        self.prompt = Prompts.QUERY_ROUTER
+        self.prompt = Prompts.query_router()
     
     def route_query(self, state: AgentState) -> AgentState:
         """Route query to appropriate path"""

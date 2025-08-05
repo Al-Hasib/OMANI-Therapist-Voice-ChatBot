@@ -1,5 +1,5 @@
 import gradio as gr
-from src.AgenticRAG.gpt import gpt_response
+from src.agenticRAG.gpt import gpt_response
 from src.SpeechToText.sr import transcribe_audio, clear_history
 from src.SpeechToText.hamsa import transcribe_audio_hamsa
 from datetime import datetime

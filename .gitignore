@@ -19,6 +19,7 @@ lib64/
 parts/
 sdist/
 var/
+venv310/
 wheels/
 share/python-wheels/
 *.egg-info/
