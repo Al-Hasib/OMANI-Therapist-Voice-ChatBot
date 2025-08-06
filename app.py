@@ -131,4 +131,16 @@ with gr.Blocks(title="Multilingual Speech to Text") as iface:
     )
 
 if __name__ == "__main__":
-    iface.launch(share=True)
+    # iface.launch(share=True)
+    demo = iface.launch(
+        share=True,
+        server_name="0.0.0.0",
+        server_port=7860,
+        show_error=True,
+        debug=True
+    )
+    
+    if hasattr(demo, 'share_url') and demo.share_url:
+        logger.info(f"🌐 Share link: {demo.share_url}")
+    else:
+        logger.warning("❌ Share link not generated")
