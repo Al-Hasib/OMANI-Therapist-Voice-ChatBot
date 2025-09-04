@@ -31,8 +31,8 @@ Try the live demo 👉 [Live Demo](https://your-demo-link.com)
 Clone the project:
 
 ```bash
-git clone https://github.com/Al-Hasib/OMANI-Therapist-Voice-ChatBot.git
-cd OMANI-Therapist-Voice-ChatBot
+git clone https://github.com/Al-Hasib/Voice-ChatBot.git
+cd Voice-ChatBot
 ```
 ## 🚀 Setup Instructions
 ```bash
